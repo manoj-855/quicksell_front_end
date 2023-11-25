@@ -18,74 +18,61 @@ function App() {
   const [tickets, setTickets] = useState([]);
   const [user, setUser] = useState([]);
 
+  const [groupValue, setGroupValue] = useState(getGroupValueFromLocalStorage() || 'status');
+  const [orderValue, setOrderValue] = useState('title');
 
-  const [groupValue, setgroupValue] = useState(getStateFromLocalStorage() || 'status')
-  const [orderValue, setorderValue] = useState('title')
-
- 
-  function handleGroupValue(value){
-    setgroupValue(value);
-    console.log(value);
-  }
-
-  function handleOrderValue(value){
-    setorderValue(value);
-    console.log(value);
-  }
-
-  function saveStateToLocalStorage(state) {
-    localStorage.setItem('groupValue', JSON.stringify(state));
-  }
-
-  function getStateFromLocalStorage() {
+  function getGroupValueFromLocalStorage() {
     const storedState = localStorage.getItem('groupValue');
     if (storedState) {
       return JSON.parse(storedState);
     }
-    return null; 
+    return null;
   }
 
-  const orderDataByValue = useCallback(async (cardsArry) => {
-    if (orderValue === 'priority') {
-      cardsArry.sort((a, b) => b.priority - a.priority);
-    } else if (orderValue === 'title') {
-      cardsArry.sort((a, b) => {
-        const titleA = a.title.toLowerCase();
-        const titleB = b.title.toLowerCase();
+  function handleGroupValue(value) {
+    setGroupValue(value);
+    console.log(value);
+  }
 
-        if (titleA < titleB) {
-          return -1;
-        } else if (titleA > titleB) {
-          return 1;
-        } else {
-          return 0;
-        }
-      });
+  function handleOrderValue(value) {
+    setOrderValue(value);
+    console.log(value);
+  }
+
+  function saveGroupValueToLocalStorage(state) {
+    localStorage.setItem('groupValue', JSON.stringify(state));
+  }
+
+  const orderDataByValue = useCallback(async (cardsArray) => {
+    if (orderValue === 'priority') {
+      cardsArray.sort((a, b) => b.priority - a.priority);
+    } else if (orderValue === 'title') {
+      cardsArray.sort((a, b) => a.title.localeCompare(b.title));
     }
-    setTickets(cardsArry);
-  }, [orderValue, setTickets]);
+    setTickets([...cardsArray]);
+  }, [orderValue]);
 
   useEffect(() => {
-    saveStateToLocalStorage(groupValue);
+    saveGroupValueToLocalStorage(groupValue);
     const getData = () => {
       fetch("https://api.quicksell.co/v1/internal/frontend-assignment")
         .then((response) => response.json())
         .then((res) => {
           setTickets(res.tickets);
-          setUser(res.users); 
+          setUser(res.users);
         })
-        orderDataByValue(tickets)
-    };
-    return ()=>getData(); 
+        orderDataByValue([...tickets]); // Remove this line
+      };
+    getData();
   }, [orderDataByValue, groupValue]);
 
 
 // dropdown
-// const [selectedOption, setSelectedOption] = useState('state');
+const [selectedOption, setSelectedOption] = useState('state');
 
-// const handleDropdownChange = (event) => {
-//   setSelectedOption(event.target.value);
-// };
+const handleDropdownChange = (event) => {
+  setSelectedOption(event.target.value);
+};
 
 
 
